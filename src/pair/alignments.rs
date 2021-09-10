@@ -30,20 +30,21 @@ impl<'a, T> Alignments<'a, T>
 where
     T: AlignmentMatrix,
 {
-    fn branches(&self, cursor: Cursor) -> Vec<(StepMask, Cursor)> {
+    fn add_branches_to_stack(&mut self, cursor: Cursor, depth: usize) {
         let steps = self.matrix.at(&cursor);
-        let mut branches = vec![];
+
         if steps == StepMask::STOP {
-            return branches;
+            return;
         }
-        for mask in [StepMask::ALIGN, StepMask::INSERT, StepMask::DELETE].iter() {
-            if steps.contains(*mask) {
+
+        for mask in [StepMask::ALIGN, StepMask::INSERT, StepMask::DELETE] {
+            if steps.contains(mask) {
                 let mut branch = cursor;
-                branch.apply_backwards_step(*mask);
-                branches.push((*mask, branch));
+                branch.apply_backwards_step(mask);
+
+                self.stack.push((mask, branch, depth));
             }
         }
-        branches
     }
 }
 
@@ -60,10 +61,9 @@ where
                 self.steps.truncate(depth - 1);
                 self.steps.push(step_mask);
             }
-            let branches = self.branches(cursor);
-            for (step_mask, cursor) in branches {
-                self.stack.push((step_mask, cursor, depth + 1));
-            }
+
+            self.add_branches_to_stack(cursor, depth + 1);
+
             if ((step_mask == StepMask::STOP) && (depth > 0)) || (cursor == zero) {
                 let mut steps: Vec<StepMask> = self.steps.clone();
                 steps.reverse();
