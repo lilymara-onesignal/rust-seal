@@ -29,8 +29,8 @@ impl Cursor {
             self.x += delta.0;
             self.y += delta.1;
         } else {
-            self.x -= delta.0;
-            self.y -= delta.1;
+            self.x = self.x.saturating_sub(delta.0);
+            self.y = self.y.saturating_sub(delta.1);
         }
     }
 }
